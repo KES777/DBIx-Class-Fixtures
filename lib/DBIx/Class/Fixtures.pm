@@ -619,7 +619,7 @@ sub dump {
       sets => [
         map {
           { class => $_, quantity => 'all' };
-        } grep {
+        } sort grep {
           !$excludes{$_}
         } $schema->sources],
     };
@@ -647,7 +647,11 @@ sub dump {
   $tmp_output_dir->file('_dumper_version')->print($VERSION);
 
   # write our current config set
-  $tmp_output_dir->file('_config_set')->print( Dumper $config );
+  my $dumped = do {
+    local $Data::Dumper::Sortkeys = 1;
+    Dumper $config;
+  };
+  $tmp_output_dir->file('_config_set')->print( $dumped );
 
   $config->{rules} ||= {};
   my @sources = @{delete $config->{sets}};
@@ -910,7 +914,10 @@ sub dump_object {
     }
 
     # do the actual dumping
-    my $serialized = Dump(\%ds)->Out();
+    my $serialized = do {
+      local $Data::Dumper::Sortkeys = 1;
+      Dump(\%ds)->Out();
+    };
 
     $file->print($serialized);
   }
